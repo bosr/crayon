@@ -23,8 +23,9 @@ version: v1
               }
 
 /runs:
+  description: Collection of available runs
   get:
-    description: Retrieve a list of runs
+    description: Retrieve the list of available runs
     responses:
       200:
         body:
@@ -34,3 +35,18 @@ version: v1
                 'vgg16,lr=1e-3,lambda=1e-1',
                 'vgg16,lr=1e-3,lambda=3e-1'
               ]
+  /{runName}:
+   get:
+    description: Details regarding a run
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              a json dictionnary with the following entries:
+                scalars: the name of all the scalar data entries
+                histograms: the name of all the histogram data entries
+            description:
+              a json dictionnary with the following entries:
+                scalars: the name of all the scalar data entries
+                histograms: the name of all the histogram data entries

@@ -15,8 +15,8 @@ def before():
 
 
 @main.route("/", methods=['GET'], strict_slashes=False)
-@main.route("/health", methods=['GET'], strict_slashes=False)
-def health():
+@main.route("/status", methods=['GET'], strict_slashes=False)
+def status():
     response = requests.get(g.tensorboard_url + '/data/logdir')
 
     if response.status_code != 200:
