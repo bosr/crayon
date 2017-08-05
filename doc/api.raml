@@ -1,0 +1,36 @@
+#%RAML 1.0
+---
+title: Lapiz HTTP Bridge to Tensorboard
+baseUri: http://localhost.com/{version}
+version: v1
+
+/status:
+  get:
+    description: Check server version and health
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                  "health": "OK",
+                  "message": "Tensorboard running at 'http://localhost:6006' in folder '/tmp/tensorboard'",
+                  "tensorboard": {
+                      "address": "http://localhost:6006",
+                      "logdir": "/tmp/tensorboard"
+                  },
+                  "version": "0.5.0"
+              }
+
+/runs:
+  get:
+    description: Retrieve a list of runs
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              [
+                'vgg16,lr=1e-3,lambda=1e-1',
+                'vgg16,lr=1e-3,lambda=3e-1'
+              ]
