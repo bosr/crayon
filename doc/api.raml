@@ -22,31 +22,168 @@ version: v1
                   "version": "0.5.0"
               }
 
+/plugins:
+  get:
+    description: List of supported plugins
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              [ "scalars", "histograms" ]
+
 /runs:
   description: Collection of available runs
   get:
-    description: Retrieve the list of available runs
+    description: Retrieve the list of available runs, empty runs are listed separately.
     responses:
       200:
         body:
           application/json:
             example: |
-              [
-                'vgg16,lr=1e-3,lambda=1e-1',
-                'vgg16,lr=1e-3,lambda=3e-1'
-              ]
+              {
+                  "empty_runs": [],
+                  "runs": [
+                      "vgg16,lr=1e-2,lambda=1e-3",
+                      "vgg16,lr=3e-3,lambda=1e-3"
+                  ]
+              }
   /{runName}:
-   get:
-    description: Details regarding a run
-    responses:
-      200:
+    delete:
+      description: Delete run {runName}
+      responses:
+        404:
+          body:
+            text/plain:
+              example: |
+                "Unknown run 'vgg16,lr=1e-2,lambda=1e-3'."
+        204:
+          text/plain: !!null
+
+    get:
+      description: All summaries (may be large) for run {runName}: all events data per tag per plugin (scalar, histogram, ...). This data can be filtered using 'plugin' and 'tag' query parameters.
+      queryParameters:
+        plugins:
+          description: Filter output on these plugin names (comma separated list)
+          required: false
+          type: string
+        tags:
+          description: Filter output on these tag names (comma separated list)
+          required: false
+          type: string
+        format:
+          description: Format as JSON (or something else later)
+          required: false
+          type: string
+          default: json
+        last:
+          description: Return only the last n samples in each collection
+          required: false
+          type: integer
+          default: -1
+      responses:
+        404:
+          body:
+            text/plain:
+              example: |
+                "Unknown run 'vgg16,lr=1e-2,lambda=1e-3'."
+        200:
+          body:
+            application/json:
+              examples:
+                json:
+                  description: using format=json&plugins=scalars&tags=loss
+                  value: |
+                    {
+                      "scalars": {
+                        "loss": [
+                          { "wall_time": 1501828765.256108, "step": 1, "value": 0.0 },
+                          { "wall_time": 1501828789.639651, "step": 1, "value": 0.800000011920929 },
+                          { "wall_time": 1501828789.749428, "step": 2, "value": 1.600000023841858 },
+                          { "wall_time": 1501828789.859591, "step": 3, "value": 2.4000000953674316 },
+                          { "wall_time": 1501828789.968653, "step": 4, "value": 3.200000047683716 },
+                          { "wall_time": 1501828790.094872, "step": 5, "value": 4.0 },
+                          { "wall_time": 1501828790.228258, "step": 6, "value": 4.800000190734863 },
+                          { "wall_time": 1501828790.355724, "step": 7, "value": 5.599999904632568 },
+                          { "wall_time": 1501828790.486281, "step": 8, "value": 6.400000095367432 },
+                          { "wall_time": 1501828790.61703,  "step": 9, "value": 7.199999809265137 }
+                        ]
+                      }
+                    }
+                compact:
+                  description: using format=compact&plugins=scalars&tags=accuracy,loss
+                  value: |
+                    {
+                      "scalars": {
+                        "accuracy": [
+                          [ 1501828765.256108, 1, 0.0 ],
+                          [ 1501828789.639651, 1, 0.800000011920929 ],
+                          [ 1501828789.749428, 2, 1.600000023841858 ],
+                          [ 1501828789.859591, 3, 2.4000000953674316 ],
+                          [ 1501828789.968653, 4, 3.200000047683716 ],
+                          [ 1501828790.094872, 5, 4.0 ],
+                          [ 1501828790.228258, 6, 4.800000190734863 ],
+                          [ 1501828790.355724, 7, 5.599999904632568 ],
+                          [ 1501828790.486281, 8, 6.400000095367432 ],
+                          [ 1501828790.61703, 9, 7.199999809265137 ]
+                        ],
+                        "loss": [
+                          [ 1501828789.639651, 1, 13415.0 ],
+                          [ 1501828789.749428, 2, 6707.5 ],
+                          [ 1501828789.859591, 3, 4471.66650390625 ],
+                          [ 1501828789.968653, 4, 3353.75 ],
+                          [ 1501828790.094872, 5, 2683.0 ],
+                          [ 1501828790.228258, 6, 2235.833251953125 ],
+                          [ 1501828790.355724, 7, 1916.4285888671875 ],
+                          [ 1501828790.486281, 8, 1676.875 ],
+                          [ 1501828790.61703, 9, 1490.5555419921875 ]
+                        ]
+                      }
+                    }
+                latest samples:
+                  description: using format=compact&last=3&plugins=scalars&tags=accuracy,loss
+                  value: |
+                    {
+                      "scalars": {
+                        "accuracy": [
+                          [ 1501828790.355724, 7, 5.599999904632568 ],
+                          [ 1501828790.486281, 8, 6.400000095367432 ],
+                          [ 1501828790.61703, 9, 7.199999809265137 ]
+                        ],
+                        "loss": [
+                          [ 1501828790.355724, 7, 1916.4285888671875 ],
+                          [ 1501828790.486281, 8, 1676.875 ],
+                          [ 1501828790.61703, 9, 1490.5555419921875 ]
+                        ]
+                      }
+                    }
+
+    /tags:
+      get:
+        description: Metadata for run {runName}, tags per plugin (scalars, histograms, ...)
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  {
+                    "scalars": [ "loss", "accuracy" ],
+                    "histograms": [ "weights_l1", "weights_l2" ]
+                  }
+    /event:
+      post:
+        description: Append an event to run {runName}. An event is a set of summaries associated to a timestamp and a step.
         body:
           application/json:
             example: |
-              a json dictionnary with the following entries:
-                scalars: the name of all the scalar data entries
-                histograms: the name of all the histogram data entries
-            description:
-              a json dictionnary with the following entries:
-                scalars: the name of all the scalar data entries
-                histograms: the name of all the histogram data entries
+              {
+                  "wall_time": 1501914380.786504,
+                  "step": 1,
+                  "summaries": [
+                      { "tag": "accuracy", "type": "scalar", "value": 0.8 },
+                      { "tag": "loss", "type": "scalar", "value": 13415.0 }
+                  ]
+              }
+        responses:
+          204:
+            text/plain: !!null

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
 import requests
 from flask import Blueprint, current_app, g, jsonify
-# from .. import tbclient
+from .. import tbclient
 
 main = Blueprint('main', __name__)
 
@@ -16,7 +15,7 @@ def before():
 
 @main.route("/", methods=['GET'], strict_slashes=False)
 @main.route("/status", methods=['GET'], strict_slashes=False)
-def status():
+def get_status():
     response = requests.get(g.tensorboard_url + '/data/logdir')
 
     if response.status_code != 200:
@@ -39,3 +38,9 @@ def status():
             'address': g.tensorboard_url,
         }
     })
+
+
+@main.route('/plugins')
+def get_plugins():
+    active_supported_plugins = tbclient.active_plugins(g.tensorboard_url)
+    return jsonify(active_supported_plugins), 200

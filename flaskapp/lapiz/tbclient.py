@@ -1,5 +1,7 @@
+import requests
 import tensorflow as tf
 
+supported_plugins = ['scalars', 'histograms']
 
 tf_summary_writers = {}
 
@@ -22,9 +24,9 @@ def write_summaries(runname, run_folder, json_payload):
 
     summaries = []
     for jsum in json_payload['summaries']:
-        if jsum.get('type') == 'scalar':
+        if jsum.get('plugin') == 'scalar':
             s = tf.Summary.Value(tag=jsum['tag'], simple_value=jsum['value'])
-        elif jsum.get('type') == 'histogram':
+        elif jsum.get('plugin') == 'histogram':
             s = tf.Summary.Value(tag=jsum['tag'], histo=jsum['histo'])
         summaries.append(s)
 
@@ -34,3 +36,24 @@ def write_summaries(runname, run_folder, json_payload):
     writer.flush()
 
     return True
+
+
+def active_plugins(tensorboard_url):
+    response = requests.get(tensorboard_url + '/data/plugins_listing')
+    if response.status_code != 200:
+        message = "Error while retrieving plugins: {}".format(response.text)
+        return message, 500
+
+    plugins = {plugin for plugin, active in response.json().items() if active}
+    return list(plugins.intersection(supported_plugins))
+
+
+def run_tags_per_plugin(tensorboard_url, runname):
+    tags = {}
+    for plugin in active_plugins(tensorboard_url):
+        response = requests.get(tensorboard_url + '/data/plugin/' + plugin + '/tags')
+        if response.status_code != 200:
+            message = "Error while retrieving plugin '{}' data: {}".format(plugin, response.text)
+            return message, 500
+        tags[plugin] = response.json().get(runname, {})  # tags for the run
+    return tags
