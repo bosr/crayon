@@ -16,8 +16,6 @@ def before():
 
 @run.route("/", methods=['GET'], strict_slashes=False)
 def get_all_runs():
-    # folder_path = os.path.join(g.tensorboard_folder, runname)
-
     response = requests.get(g.tensorboard_url + '/data/runs')
     if response.status_code != 200:
         message = "Error while retrieving runs: {}".format(response.text)
@@ -25,11 +23,11 @@ def get_all_runs():
     runs_list = response.json()
 
     all_existing_runs = existing_runs(g.tensorboard_folder)
-    empty_runs_list = [r for r in all_existing_runs if r not in runs_list]
+    empty_runs = list(set(all_existing_runs).difference(runs_list))
 
     return jsonify({
         'runs': runs_list,
-        'empty_runs': empty_runs_list,
+        'empty_runs': empty_runs,
     })
 
 
@@ -52,14 +50,11 @@ def get_run(runname):
         return unknown_run(runname)
 
     q_format = request.args.get('format', 'compact')
-    q_plugins = request.args.get('plugins')
-    if q_plugins:
-        q_plugins = q_plugins.split(',')
-    q_tags = request.args.get('tags', [])
-    if q_tags:
-        q_tags = q_tags.split(',')
-    q_last = request.args.get('last', '-1')
-    q_last = int(q_last)
+    q_last = int(request.args.get('last', '-1'))
+    q_plugins = request.args.get('plugins', '').split(',')
+    q_plugins = [] if q_plugins == [''] else q_plugins
+    q_tags = request.args.get('tags', '').split(',')
+    q_tags = [] if q_tags == [''] else q_tags
 
     run_tags = tbclient.run_tags_per_plugin(g.tensorboard_url, runname)
     # e.g. {'scalars': ['accuracy', 'loss'], 'histograms': ['w_l1']}
@@ -67,7 +62,7 @@ def get_run(runname):
     # keep requested plugins and tags
     requested_run_tags = {}
     for plugin, taglist in run_tags.items():
-        if plugin in q_plugins:
+        if (plugin in q_plugins) or not q_plugins:
             if q_tags:  # do not filter if q_tags is empty
                 taglist = [tag for tag in taglist if tag in q_tags]
             requested_run_tags[plugin] = taglist

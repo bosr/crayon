@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 import tensorflow as tf
 
@@ -55,5 +56,5 @@ def run_tags_per_plugin(tensorboard_url, runname):
         if response.status_code != 200:
             message = "Error while retrieving plugin '{}' data: {}".format(plugin, response.text)
             return message, 500
-        tags[plugin] = response.json().get(runname, {})  # tags for the run
+        tags[unicode(plugin)] = response.json().get(runname, {})  # tags for the run
     return tags
