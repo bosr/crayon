@@ -5,7 +5,7 @@ import requests
 from flask import Blueprint, current_app, g, jsonify, request
 from .. import tbclient
 
-run = Blueprint('run', __name__)
+run = Blueprint('run', __name__, url_prefix='/runs')
 
 
 @run.before_request
@@ -14,7 +14,7 @@ def before():
     g.tensorboard_url = current_app.config['tensorboard_url']
 
 
-@run.route("/runs", methods=['GET'], strict_slashes=False)
+@run.route("/", methods=['GET'], strict_slashes=False)
 def get_all_runs():
     # folder_path = os.path.join(g.tensorboard_folder, runname)
 
@@ -33,7 +33,7 @@ def get_all_runs():
     })
 
 
-@run.route("/runs/<runname>", methods=['DELETE'], strict_slashes=False)
+@run.route("/<runname>", methods=['DELETE'], strict_slashes=False)
 def delete_run(runname):
     all_existing_runs = existing_runs(g.tensorboard_folder)
     if runname not in all_existing_runs:
@@ -48,7 +48,7 @@ def delete_run(runname):
     return '', 204
 
 
-@run.route("/runs/<runname>", methods=['GET'], strict_slashes=False)
+@run.route("/<runname>", methods=['GET'], strict_slashes=False)
 def get_run(runname):
     all_existing_runs = existing_runs(g.tensorboard_folder)
     if runname not in all_existing_runs:
@@ -96,7 +96,7 @@ def get_run(runname):
     return jsonify(data), 200
 
 
-@run.route("/runs/<runname>/tags", methods=['GET'], strict_slashes=False)
+@run.route("/<runname>/tags", methods=['GET'], strict_slashes=False)
 def get_tags(runname):
     all_existing_runs = existing_runs(g.tensorboard_folder)
     if runname not in all_existing_runs:
@@ -107,7 +107,7 @@ def get_tags(runname):
     return jsonify(run_tags), 200
 
 
-@run.route("/runs/<runname>/event", methods=['POST'], strict_slashes=False)
+@run.route("/<runname>/event", methods=['POST'], strict_slashes=False)
 def post_event(runname):
     folder_path = os.path.join(g.tensorboard_folder, runname)
     payload = request.get_json()
