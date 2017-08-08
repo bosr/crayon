@@ -35,10 +35,8 @@ def get_all_runs():
 
 @run.route("/<runname>", methods=['DELETE'], strict_slashes=False)
 def delete_run(runname):
-    all_existing_runs = existing_runs(g.tensorboard_folder)
-    if runname not in all_existing_runs:
-        message = "Unknown run: '{}'".format(runname)
-        return message, 400
+    if runname not in existing_runs(g.tensorboard_folder):
+        return unknown_run(runname)
 
     if runname in tbclient.tf_summary_writers:
         tbclient.tf_summary_writers.pop(runname)
@@ -50,10 +48,8 @@ def delete_run(runname):
 
 @run.route("/<runname>", methods=['GET'], strict_slashes=False)
 def get_run(runname):
-    all_existing_runs = existing_runs(g.tensorboard_folder)
-    if runname not in all_existing_runs:
-        message = "Unknown run: '{}'".format(runname)
-        return message, 400
+    if runname not in existing_runs(g.tensorboard_folder):
+        return unknown_run(runname)
 
     q_format = request.args.get('format', 'compact')
     q_plugins = request.args.get('plugins')
@@ -98,10 +94,8 @@ def get_run(runname):
 
 @run.route("/<runname>/tags", methods=['GET'], strict_slashes=False)
 def get_tags(runname):
-    all_existing_runs = existing_runs(g.tensorboard_folder)
-    if runname not in all_existing_runs:
-        message = "Unknown run: '{}'".format(runname)
-        return message, 400
+    if runname not in existing_runs(g.tensorboard_folder):
+        return unknown_run(runname)
 
     run_tags = tbclient.run_tags_per_plugin(g.tensorboard_url, runname)
     return jsonify(run_tags), 200
@@ -123,3 +117,8 @@ def existing_runs(tensorboard_folder):
         for run_directory in dirs:
             runs_list.append(run_directory)
     return runs_list
+
+
+def unknown_run(runname):
+    message = "Unknown run: '{}'".format(runname)
+    return message, 404
