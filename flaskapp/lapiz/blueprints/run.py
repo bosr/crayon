@@ -4,6 +4,7 @@ import shutil  # rmtree
 import requests
 from flask import Blueprint, current_app, g, jsonify, request
 from .. import tbclient
+from .. import helpers
 
 run = Blueprint('run', __name__, url_prefix='/runs')
 
@@ -51,38 +52,12 @@ def get_run(runname):
 
     q_format = request.args.get('format', 'compact')
     q_last = int(request.args.get('last', '-1'))
-    q_plugins = request.args.get('plugins', '').split(',')
-    q_plugins = [] if q_plugins == [''] else q_plugins
-    q_tags = request.args.get('tags', '').split(',')
-    q_tags = [] if q_tags == [''] else q_tags
+    q_plugins = request.args.get('plugins')
+    q_plugins = q_plugins.split(',') if q_plugins else []
+    q_tags = request.args.get('tags', '')
+    q_tags = q_tags.split(',') if q_tags else []
 
-    run_tags = tbclient.run_tags_per_plugin(g.tensorboard_url, runname)
-    # e.g. {'scalars': ['accuracy', 'loss'], 'histograms': ['w_l1']}
-
-    # keep requested plugins and tags
-    requested_run_tags = {}
-    for plugin, taglist in run_tags.items():
-        if (plugin in q_plugins) or not q_plugins:
-            if q_tags:  # do not filter if q_tags is empty
-                taglist = [tag for tag in taglist if tag in q_tags]
-            requested_run_tags[plugin] = taglist
-
-    # get samples for each plugin & each tag in the run
-    data = {}
-    for plugin, taglist in requested_run_tags.items():
-        if not data.get(plugin):
-            data[plugin] = {}
-        for tag in taglist:
-            url = g.tensorboard_url + '/data/plugin/' + plugin + '/' + plugin + '?run=' + runname + '&tag=' + tag
-            response = requests.get(url)
-            samples = response.json()
-            if q_last != -1:
-                samples = samples[-q_last:]
-            data[plugin][tag] = samples
-
-    # reformatting if needed
-    if q_format == 'json':
-        pass
+    data = helpers.get_run_tags(g.tensorboard_url, runname, (q_plugins, q_tags, q_format, q_last))
 
     return jsonify(data), 200
 
