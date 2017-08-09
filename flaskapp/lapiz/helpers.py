@@ -4,7 +4,8 @@ import requests
 from . import tbclient
 
 
-def get_run_tags(tensorboard_url, runname, (q_plugins, q_tags, q_format, q_last)):
+def get_run_tags(tensorboard_url, runname, requested):
+    q_plugins, q_tags, q_format, q_last = requested
     run_tags = tbclient.run_tags_per_plugin(tensorboard_url, runname)
     # e.g. {'scalars': ['accuracy', 'loss'], 'histograms': ['w_l1']}
 
