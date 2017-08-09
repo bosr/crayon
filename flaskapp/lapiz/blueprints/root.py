@@ -3,7 +3,7 @@ import requests
 from flask import Blueprint, current_app, g, jsonify
 from .. import tbclient
 
-root = Blueprint('root', __name__)
+root = Blueprint('root', __name__)  # pylint: disable=invalid-name
 
 
 @root.before_request

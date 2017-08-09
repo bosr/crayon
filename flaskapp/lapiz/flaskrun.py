@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import optparse
-import os
 from . import __version__
 
 

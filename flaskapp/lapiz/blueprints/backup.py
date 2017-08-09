@@ -7,7 +7,7 @@ from flask import Blueprint, current_app, request, g
 from flask import send_file
 from .. import tbclient
 
-backup = Blueprint('backup', __name__)
+backup = Blueprint('backup', __name__)  # pylint: disable=invalid-name
 
 
 @backup.before_request
@@ -28,12 +28,12 @@ def get_backup(runname):
     # zip the directory structure under folder_path (/tmp/tensorboard/runname)
     # to a memory file
     memory_file = io.BytesIO()
-    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zfile:
         for root, _, files in os.walk(folder_path):
             for filepath in files:
-                zf.write(os.path.join(root, filepath),
-                         os.path.relpath(os.path.join(root, filepath),
-                                         os.path.join(folder_path, '..')))
+                zfile.write(os.path.join(root, filepath),
+                            os.path.relpath(os.path.join(root, filepath),
+                                            os.path.join(folder_path, '..')))
 
     memory_file.seek(0)
     return send_file(memory_file,
@@ -78,8 +78,8 @@ def post_backup(runname):
         if (not content_type) or (content_type != "application/zip"):
             message = "Backup post request should contain a file or a zip"
             return message, 400
-        with open(zip_filepath, "wb") as f:
-            f.write(request.data)
+        with open(zip_filepath, "wb") as zfile:
+            zfile.write(request.data)
 
     Popen("mkdir -p {}".format(folder_path), stdout=PIPE, shell=True)
     Popen("cd {}; unzip {}".format(folder_path, zip_filepath),
@@ -87,6 +87,6 @@ def post_backup(runname):
 
     os.remove(zip_filepath)
 
-    tb_get_xp_writer(experiment)
+    # tb_get_xp_writer(experiment)
 
     return "ok"

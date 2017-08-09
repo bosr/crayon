@@ -6,7 +6,7 @@ from flask import Blueprint, current_app, g, jsonify, request
 from .. import tbclient
 from .. import helpers
 
-run = Blueprint('run', __name__, url_prefix='/runs')
+run = Blueprint('run', __name__, url_prefix='/runs')  # pylint: disable=invalid-name
 
 
 @run.before_request

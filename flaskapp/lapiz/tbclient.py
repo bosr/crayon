@@ -2,9 +2,8 @@
 import requests
 import tensorflow as tf
 
-supported_plugins = ['scalars', 'histograms']
-
-tf_summary_writers = {}
+supported_plugins = ['scalars', 'histograms']  # pylint: disable=invalid-name
+tf_summary_writers = {}  # pylint: disable=invalid-name
 
 
 # def get_summary_writer(runname):
@@ -26,10 +25,9 @@ def write_summaries(runname, run_folder, json_payload):
     summaries = []
     for jsum in json_payload['summaries']:
         if jsum.get('plugin') == 'scalar':
-            s = tf.Summary.Value(tag=jsum['tag'], simple_value=jsum['value'])
+            summaries.append(tf.Summary.Value(tag=jsum['tag'], simple_value=jsum['value']))
         elif jsum.get('plugin') == 'histogram':
-            s = tf.Summary.Value(tag=jsum['tag'], histo=jsum['histo'])
-        summaries.append(s)
+            summaries.append(tf.Summary.Value(tag=jsum['tag'], histo=jsum['histo']))
 
     summary = tf.Summary(value=summaries)
     event = tf.Event(wall_time=wall_time, step=step, summary=summary)
