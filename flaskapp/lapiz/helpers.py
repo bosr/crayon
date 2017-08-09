@@ -4,8 +4,8 @@ import requests
 from . import tbclient
 
 
-def get_run_tags(tensorboard_url, runname, requested):
-    q_plugins, q_tags, q_format, q_last = requested
+def get_run_tags(tensorboard_url, runname, req):
+    q_plugins, q_tags, q_format, q_last = req
     run_tags = tbclient.run_tags_per_plugin(tensorboard_url, runname)
     # e.g. {'scalars': ['accuracy', 'loss'], 'histograms': ['w_l1']}
 
@@ -27,24 +27,32 @@ def get_run_tags(tensorboard_url, runname, requested):
             # dot not filter if q_last == -1
             data[plugin][tag] = samples[-q_last:] if q_last != -1 else samples
 
-    # reformatting if needed to json
-    # from
-    #
-    # {
-    # "scalars": {
-    #   "accuracy": [
-    #     [ 1502217057.323536, 7, 39.20000076293945 ],
-    #
-    # to
-    #
-    # {
-    # "scalars": {
-    #   "accuracy": [
-    #     { "step": 7, "value": 39.20000076293945, "wall_time": 1502217057.323536 },
 
     if q_format == 'compact':
         return data
+    elif q_format == 'json':
+        return compact_to_json(data)
+    return {}
 
+
+def compact_to_json(data):
+    """
+    reformat to json
+    from
+
+    {
+    "scalars": {
+      "accuracy": [
+        [ 1502217057.323536, 7, 39.20000076293945 ],
+
+    to
+
+    {
+    "scalars": {
+      "accuracy": [
+        { "step": 7, "value": 39.20000076293945, "wall_time": 1502217057.323536 },
+
+    """
     json_data = defaultdict(dict)
     for plugin, tag_dict in data.items():
         for tag, samples in tag_dict.items():
